@@ -47,6 +47,8 @@ class request {
    void process_command(DynamicJsonDocument jsonDoc);
    void data_from_fifo_to_server();
 
+   void get_info_from_other_core():
+
    void read_from
 
    
