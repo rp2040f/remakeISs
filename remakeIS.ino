@@ -29,12 +29,14 @@ void setup(){
 
 void loop1()
 {
-    Request.networkCheck();
-    Request.get_request();
+    if (Request.networkCheck() == 0) 
+    {
+        Request.get_request();
+    }
+    Request.get_info_from_other_core();
 }
 
 void loop() {
-    
     Measures.get_command_from_other_core();
     Measures.check_measure_activated(&sht);
 }

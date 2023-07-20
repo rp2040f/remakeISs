@@ -10,8 +10,7 @@
 #include "basic_funcs.h"
 #include <ArduinoJson.h>
 #include <stdlib.h>
-
-
+#include "behavior.h"
 #include "IO.h"
 
 static byte Default_mac[] = {   0x00, 0x22, 0x8F, 0x10, 0xA0, 0x01  };
@@ -29,6 +28,7 @@ class request {
 
    EthernetClient client,user_cmd;
    EthernetServer server = EthernetServer(80);
+   behaviors myBehaviors;
    
    // byte saved_mac[6];
    // byte* Get_MAC( );
@@ -45,15 +45,23 @@ class request {
    void handleRoot();
 
    void process_command(DynamicJsonDocument jsonDoc);
-   void data_from_fifo_to_server();
+   void get_info_from_other_core();
 
-   void get_info_from_other_core():
+   int read_measure_setup_from_core();
+   void send_response_measure_started(int timer);
 
-   void read_from
+   int read_measure_value_from_core();
 
-   
-   
-   
+   void send_push_to_graphana(int timer ,float data);
+
+   void send_info();
+
+   int read_clear_measure();
+   void send_response_clear_measure(int timer);
+
+   void send_post_response(DynamicJsonDocument jsonDoc);
+   void send_post_request(DynamicJsonDocument jsonDoc);
+
 };
 
 

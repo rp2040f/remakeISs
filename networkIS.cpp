@@ -41,7 +41,7 @@ void request::networkSetup() {
     delay(1000);
 
     //At this point the IS is connected to the network
-    core_debug("set up");
+    core_debug((char *)"set up\n");
     // IPAddress gateway(192, 168, 10, 1); //Only for local switch network
     // Ethernet.setGatewayIP(gateway);
     Serial.print("My IP address: ");
@@ -160,7 +160,7 @@ void request::rdisconnect() {
 
 void request::get_request() {
     handleRoot();
-    client.stop();
+    user_cmd.stop();
 }
 
 void request::process_command(DynamicJsonDocument jsonDoc) {
@@ -168,13 +168,18 @@ void request::process_command(DynamicJsonDocument jsonDoc) {
     {
         write_to_other_core(jsonDoc["M"]);
         write_to_other_core(jsonDoc["P"]);
-        write_to_other_core(jsonDoc["sensorID"]);
+        write_to_other_core(jsonDoc["C"]);
+        write_to_other_core(jsonDoc["G"]);
+        delay(100);
+        get_info_from_other_core();
         
     }
     if (jsonDoc["M"] == 9) // unitary measure
     {
         write_to_other_core(jsonDoc["M"]);
-        write_to_other_core(jsonDoc["sensorID"]);
+        write_to_other_core(jsonDoc["C"]);
+        delay(100);
+        get_info_from_other_core();
     }
     
     if (jsonDoc["M"] == 11) //clear meausre
@@ -182,22 +187,39 @@ void request::process_command(DynamicJsonDocument jsonDoc) {
         write_to_other_core(jsonDoc["M"]);
         write_to_other_core(jsonDoc["I"]);
         write_to_other_core(jsonDoc["D"]);
+        delay(100);
+        get_info_from_other_core();
+    }
+    if (jsonDoc["M"] == 0)
+    {
+        send_info();
+    }
+    if (jsonDoc["M"] == 2)
+    {
+        write_to_other_core(jsonDoc["M"]);
+        write_to_other_core(jsonDoc["P"]);
+        write_to_other_core(jsonDoc["C"]);
+        write_to_other_core(jsonDoc["m"]);
+        write_to_other_core(jsonDoc["MM"]);
+        write_to_other_core(jsonDoc["G"]);
+        delay(100);
+        get_info_from_other_core();
     }
     
 
 }
 
 void request::handleRoot() {
-    client = server.available();
-    if (client) {
+    user_cmd = server.available();
+    if (user_cmd) {
         // Wait for a request to be available
         Serial.println("got it!");
-        if (client.connected()) {
+        if (user_cmd.connected()) {
         // Read the GET request
         String request = "";
-        while (client.connected()) {
-            if (client.available()) {
-            char c = client.read();
+        while (user_cmd.connected()) {
+            if (user_cmd.available()) {
+            char c = user_cmd.read();
             request += c;
             if (c == '\n') {
                 if (request.startsWith("GET")) {
@@ -244,13 +266,13 @@ void request::handleRoot() {
                         serializeJson(jsonDoc, jsonString);
 
                         process_command(jsonDoc);
-
+                        
                         // Set the content type of the response to application/json
-                        client.println("HTTP/1.1 200 OK");
-                        client.println("Content-Type: application/json");
-                        client.println();
-                        // Send the JSON response
-                        client.println(jsonString);
+                        // user_cmd.println("HTTP/1.1 200 OK");
+                        // user_cmd.println("Content-Type: application/json");
+                        // user_cmd.println();
+                        // // Send the JSON response
+                        // user_cmd.println(jsonString);
                     }
                     }
                 }
@@ -259,10 +281,258 @@ void request::handleRoot() {
             }
             }
         }
-        client.stop();
+        user_cmd.stop();
         }
     }
 }
 
+void request::get_info_from_other_core() {
+    uint32_t mode;
+    if (read_from_other_core(&mode)) {
+        if (mode == 8)
+        {
+            core_debug((char *)"got mode 8\n");
+            read_measure_setup_from_core();
+                
+        }
+        if (mode == 1)
+        {
+            core_debug((char *)"got mode 1\n");
+            read_measure_value_from_core();
+        }
+        if (mode == 11)
+        {
+            core_debug((char *) "got mode 11\n");
+            read_clear_measure();
+        }    
+    }  
+}
+int request::read_clear_measure() {
+    uint32_t timer , flag;
+    int timeout = 10;
+    while (timeout && !read_from_other_core(&timer))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("timer not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&flag))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("flag not recieved from other core");
+        return -1;
+    }
+
+    myBehaviors.shutdown_behavior(timer);
+    if (networkCheck() == 0)
+    {
+        send_response_clear_measure(timer);
+    }
+    return 1;
+}
+
+void request::send_response_clear_measure(int timer) {
+    DynamicJsonDocument jsonDoc(1024);
+    jsonDoc["status"] = "Timer "+(String)timer+"stopped";
+    send_post_response(jsonDoc);
+}
+
+int request::read_measure_setup_from_core() {
+    uint32_t sensorID , period , timer , flag , push_to_graphana;
+    int timeout = 10;
+    while (timeout && !read_from_other_core(&sensorID))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("sensorID not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&period))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("period not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&timer))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("timer not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&flag))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("flag not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&push_to_graphana))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("push_to_graphana not recieved from other core");
+        return -1;
+    }
+
+    myBehaviors.init_behavior(sensorID,period,timer,flag,push_to_graphana);
+    if (networkCheck() == 0)
+    {
+        send_response_measure_started(timer);
+    }
+    return 1;
+}
+
+void request::send_response_measure_started(int timer) {
+    DynamicJsonDocument jsonDoc(1024);
+    
+    jsonDoc["status"] = "Timer "+(String)timer+" started";
+
+    send_post_response(jsonDoc);
+
+}
+
+void request::send_push_to_graphana(int timer,float data) {
+    DynamicJsonDocument jsonDoc(1024);
+    
+    jsonDoc["status"] = "Timer "+(String)timer+" started";
+    jsonDoc["value"] = (String) data;
+
+    send_post_request(jsonDoc);
+
+}
+
+int request::read_measure_value_from_core() {
+    uint32_t timer , data;
+    int timeout = 10;
+    while (timeout && !read_from_other_core(&timer))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("timer not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&data))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("data not recieved from other core");
+        return -1;
+    }
+
+    myBehaviors.update_data(timer,uint32ToFloat(data));
+
+    if (myBehaviors.regular_behaviors[timer].push_to_graphana && networkCheck() == 0)
+    {
+        send_push_to_graphana(timer,myBehaviors.regular_behaviors[timer].one_value_data);
+    }
+
+    return 1;
+  
+}
+
+void request::send_info() {
+    DynamicJsonDocument jsonDoc(1024);
+    for (int i = 0; i < myBehaviors.nbre_behaviors; i++)
+    {
+        if (myBehaviors.regular_behaviors[i].in_use)
+        {
+            jsonDoc["active_behaviors"][i]["timer"] = myBehaviors.regular_behaviors[i].timer;
+            jsonDoc["active_behaviors"][i]["sensorID"] = myBehaviors.regular_behaviors[i].sensorID;
+            jsonDoc["active_behaviors"][i]["period"] = myBehaviors.regular_behaviors[i].period;
+            jsonDoc["active_behaviors"][i]["flag"] = myBehaviors.regular_behaviors[i].flag;
+            jsonDoc["active_behaviors"][i]["maximum"] = myBehaviors.regular_behaviors[i].max;
+            jsonDoc["active_behaviors"][i]["minimum"] = myBehaviors.regular_behaviors[i].min;
+        }
+    }
+    send_post_response(jsonDoc);   
+}
+
+void request::send_post_request(DynamicJsonDocument jsonDoc) {
+    String jsonString;
+    serializeJson(jsonDoc, jsonString);
+    
+    if (client.connect(server_ip, 80)) {
+        Serial.println("connected to send data");
+        client.println("POST /cgi-bin/get_mydata.sh HTTP/1.1");
+        client.print("Host: ");
+        client.println(server_ip);
+        client.println("Content-Type: application/json");
+        client.print("Content-Length: ");
+        client.print(jsonString.length());
+        client.println();
+        client.println();
+        client.print(jsonString);
+        client.flush();
+        read_data_back();
+    }
+    else {
+        Serial.println("connection failed");
+    }
+}
+
+void request::send_post_response(DynamicJsonDocument jsonDoc) {
+    String jsonString;
+    serializeJson(jsonDoc, jsonString);
+    user_cmd.println("HTTP/1.1 200 OK");
+    user_cmd.println("Content-Type: application/json");
+    user_cmd.println();
+
+    user_cmd.println(jsonString);
+    
+    // if (client.connect(server_ip, 80)) {
+    //     Serial.println("connected to send data");
+    //     client.println("POST /cgi-bin/get_mydata.sh HTTP/1.1");
+    //     client.print("Host: ");
+    //     client.println(server_ip);
+    //     client.println("Content-Type: application/json");
+    //     client.print("Content-Length: ");
+    //     client.print(jsonString.length());
+    //     client.println();
+    //     client.println();
+    //     client.print(jsonString);
+    //     client.flush();
+    //     read_data_back();
+    // }
+    // else {
+    //     Serial.println("connection failed");
+    // }
+}
 
 
