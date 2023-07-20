@@ -27,12 +27,14 @@ void setup(){
     
 }
 
+
 void loop1()
 {
     Request.networkCheck();
     Request.get_request();
 }
 
+//core 0 is responsable for managing interrupts cuz it seems that timeInterruptInterval works only with core 0
 void loop() {
     
     Measures.get_command_from_other_core();

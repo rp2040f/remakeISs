@@ -10,7 +10,7 @@ void init_sht(SHT31 *sht) {
         Serial.println("sht is set successfully!");
     }
     else {
-        Serial.println("error setup sht!");
+        Serial.println("no sht found!");
     }
 }
 
