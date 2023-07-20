@@ -4,6 +4,7 @@
 #include <RPi_Pico_TimerInterrupt.h>
 #include "basic_funcs.h"
 
+
 #include "sensor.h"
 
 // This is the common delay to wait for SHT sensor ready
@@ -19,6 +20,10 @@ typedef struct Measure{
     int sensorID;
     bool in_use = false;
     bool flag = false;
+    bool push_to_graphana = false;
+    bool in_alert_mode = false;
+    float min;
+    float max;
 
 }Measure;
 
@@ -33,7 +38,7 @@ class measures {
     Measure regular_measures[4];
     int nbre_measures = 4;
 
-    int init_regular_measure(int period,int sensorID);
+    int init_regular_measure(int period,int sensorID,int push_to_graphana);
     int get_mode_regular_measure();
     int check_not_used_measure();
 
@@ -57,8 +62,10 @@ class measures {
 
     void send_info_to_other_core(int mode, Measure *mes);
 
+    int set_alert(int timer);
+
+    int get_mode_regular_measure_alert();
     
-      
 };
 
 static RPI_PICO_Timer ITimer0(0);

@@ -38,6 +38,7 @@
                 "/home/i/Arduino/libraries/RPI_PICO_TimerInterrupt/src",
                 "/home/i/Arduino/libraries/SHT31",
                 "/home/i/.arduino15/packages/rp2040/hardware/rp2040/3.3.0/libraries/Wire/src",
+                "/home/i/.arduino15/packages/rp2040/hardware/rp2040/3.3.0/libraries/LittleFS/src",
                 "/home/i/.arduino15/packages/rp2040/tools/pqt-gcc/1.5.0-b-c7bab52/arm-none-eabi/include/c++/10.3.0",
                 "/home/i/.arduino15/packages/rp2040/tools/pqt-gcc/1.5.0-b-c7bab52/arm-none-eabi/include/c++/10.3.0/arm-none-eabi/thumb",
                 "/home/i/.arduino15/packages/rp2040/tools/pqt-gcc/1.5.0-b-c7bab52/arm-none-eabi/include/c++/10.3.0/backward",
