@@ -14,6 +14,7 @@ typedef struct behavior {
     bool in_use = false;
     int flag = false;
     bool push_to_graphana = false;
+    bool in_alert_mode = false;
     float min = -1;
     float max = -1;
     bool in_alert_mode = false;
@@ -32,6 +33,8 @@ class behaviors {
     void update_data(int timer,float data);
     void shutdown_behavior(int timer,int mode);
     void allocate_databank(int timer,int nbre)
+
+    void init_alert(int timer,float min , float max);
 
 
 };

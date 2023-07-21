@@ -12,6 +12,7 @@ int measures::init_regular_measure(int period,int sensorID,int push_to_grafana) 
     regular_measures[free_spot].period = period;
     regular_measures[free_spot].sensorID = sensorID;
     regular_measures[free_spot].push_to_graphana = (bool)push_to_grafana;
+    regular_measures[free_spot].flag = false;
     
     if (free_spot == 0 && !timers[0])
     {
@@ -422,12 +423,11 @@ void measures::send_info_to_other_core(int mode,Measure *mes) {
     if ( mode == 2)
     {
         write_to_other_core(2);
+        write_to_other_core(mes->timer);
         write_to_other_core(uint32_t(mes->in_alert_mode));
         write_to_other_core(floatToUint32(mes->min));
         write_to_other_core(floatToUint32(mes->max));
     }
-    
-    
        
 }
 
