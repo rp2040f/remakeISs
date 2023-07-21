@@ -304,7 +304,13 @@ void request::get_info_from_other_core() {
         {
             core_debug((char *) "got mode 11\n");
             read_clear_measure();
-        }    
+        }
+        if (mode == 2)
+        {
+            core_debug((char *)"got mode 2 \n");
+            read_alert_setup_from_core();
+        }
+          
     }  
 }
 int request::read_clear_measure() {
@@ -411,6 +417,62 @@ int request::read_measure_setup_from_core() {
     }
     return 1;
 }
+
+int request::read_alert_setup_from_core() {
+    uint32_t timer,in_alert_mode,min,max;
+    int timeout = 10;
+    while (timeout && !read_from_other_core(&timer))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("timer not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&in_alert_mode))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("in_alert_mode not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&min))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("min not recieved from other core");
+        return -1;
+    }
+
+    while (timeout && !read_from_other_core(&max))
+    {
+        timeout--;
+    }
+
+    if (!timeout)
+    {
+        Serial.println("max not recieved from other core");
+        return -1;
+    }
+
+    myBehaviors.init_behavior(sensorID,period,timer,flag,push_to_graphana);
+    if (networkCheck() == 0)
+    {
+        send_response_measure_started(timer);
+    }
+    return 1;
+}
+
 
 void request::send_response_measure_started(int timer) {
     DynamicJsonDocument jsonDoc(1024);

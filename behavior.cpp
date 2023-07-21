@@ -17,7 +17,15 @@ void behaviors::update_data(int timer,float data){
 
 void behaviors::shutdown_behavior(int timer){
     regular_behaviors[timer].in_use = false;
+    regular_behaviors[timer].in_alert_mode = false;
+    regular_behaviors[timer].push_to_graphana = false;
+    regular_behaviors[timer].flag = false'
     Serial.print("timer shutdown behave:");
     Serial.println(timer);
+}
+
+void behaviors::init_alert(int timer,float min , float max) {
+    regular_behaviors[timer].min = min;
+    regular_behaviors[timer].max = max;
 }
 
