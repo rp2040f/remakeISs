@@ -47,16 +47,16 @@ class request {
    void process_command(DynamicJsonDocument jsonDoc);
    void get_info_from_other_core();
 
-   int read_measure_setup_from_core();
+   int read_measure_setup_from_core(int mode);
    void send_response_measure_started(int timer);
 
-   int read_measure_value_from_core();
+   int read_measure_value_from_core(int mode);
 
    void send_push_to_graphana(int timer ,float data);
 
    void send_info();
 
-   int read_clear_measure();
+   int read_clear_measure(int mode);
    void send_response_clear_measure(int timer);
 
    void send_post_response(DynamicJsonDocument jsonDoc);

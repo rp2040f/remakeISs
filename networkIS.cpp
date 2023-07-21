@@ -292,18 +292,18 @@ void request::get_info_from_other_core() {
         if (mode == 8)
         {
             core_debug((char *)"got mode 8\n");
-            read_measure_setup_from_core();
+            read_measure_setup_from_core(mode);
                 
         }
         if (mode == 1)
         {
             core_debug((char *)"got mode 1\n");
-            read_measure_value_from_core();
+            read_measure_value_from_core(mode);
         }
         if (mode == 11)
         {
             core_debug((char *) "got mode 11\n");
-            read_clear_measure();
+            read_clear_measure(mode);
         }    
     }  
 }
@@ -332,7 +332,7 @@ int request::read_clear_measure() {
         return -1;
     }
 
-    myBehaviors.shutdown_behavior(timer);
+    myBehaviors.shutdown_behavior(timer,int mode);
     if (networkCheck() == 0)
     {
         send_response_clear_measure(timer);
@@ -404,7 +404,7 @@ int request::read_measure_setup_from_core() {
         return -1;
     }
 
-    myBehaviors.init_behavior(sensorID,period,timer,flag,push_to_graphana);
+    myBehaviors.init_behavior(sensorID,period,timer,flag,push_to_graphana,mode);
     if (networkCheck() == 0)
     {
         send_response_measure_started(timer);
